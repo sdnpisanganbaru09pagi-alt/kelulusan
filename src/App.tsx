@@ -241,7 +241,7 @@ export default function App() {
             transition={{ duration: 0.4, delay: 0.2 }}
             className="text-xs md:text-sm font-semibold tracking-wider text-blue-600 uppercase mt-1 flex items-center gap-1.5 justify-center"
           >
-            <Building className="w-4 h-4 inline" /> DKI Jakarta &middot; Sekolah Standar Nasional
+            <Building className="w-4 h-4 inline" /> DKI Jakarta
           </motion.p>
           <motion.p
             initial={{ y: 15, opacity: 0 }}
