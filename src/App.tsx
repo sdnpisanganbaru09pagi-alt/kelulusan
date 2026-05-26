@@ -81,6 +81,7 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState('');
   const [copied, setCopied] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const [logoError, setLogoError] = useState(false);
 
   // Background dataset fetch state
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -214,7 +215,7 @@ export default function App() {
   };
 
   return (
-    <div id="main-container" className="min-h-screen bg-gradient-to-tr from-slate-100 via-slate-50 to-blue-50 py-10 px-4 flex flex-col items-center justify-start font-sans">
+    <div id="main-container" className="min-h-screen py-10 px-4 flex flex-col items-center justify-start font-sans bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "linear-gradient(rgba(248,250,252,0.86), rgba(248,250,252,0.9)), url(/assets/bg-sekolah.jpg)" }}>
       <div className="w-full max-w-xl flex flex-col gap-6">
         
         {/* School Header Banner */}
@@ -223,9 +224,18 @@ export default function App() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 border border-blue-400 mb-4"
+            className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-slate-300 border border-slate-200 mb-4 overflow-hidden"
           >
-            <GraduationCap className="w-11 h-11 text-white" />
+            {!logoError ? (
+              <img
+                src="/assets/logo-sdn.png"
+                alt="Logo SDN Pisangan Baru 09"
+                className="w-full h-full object-contain p-1"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <GraduationCap className="w-11 h-11 text-blue-600" />
+            )}
           </motion.div>
           <motion.h1 
             initial={{ y: 15, opacity: 0 }}
