@@ -1,0 +1,6 @@
+{
+  "name": "Cek Kelulusan NISN",
+  "description": "Aplikasi web responsif untuk mengecek status kelulusan siswa SDN Pisangan Baru 09 Pagi menggunakan nomor NISN dengan basis data Google Sheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
