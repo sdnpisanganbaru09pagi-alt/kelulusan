@@ -82,6 +82,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const [logoError, setLogoError] = useState(false);
+  const [pdfPendingNotice, setPdfPendingNotice] = useState(false);
 
   // Background dataset fetch state
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -173,10 +174,20 @@ export default function App() {
   const finalizeSearchResult = (found: Student | undefined) => {
     if (found) {
       setResult(found);
+      setPdfPendingNotice(false);
       setQueryState('success');
     } else {
       setQueryState('not_found');
     }
+  };
+
+  const isPdfLinkAvailable = (pdf: string) => {
+    const normalizedPdf = pdf.trim().toLowerCase();
+    return Boolean(normalizedPdf && normalizedPdf !== 'null');
+  };
+
+  const showPendingPdfNotice = () => {
+    setPdfPendingNotice(true);
   };
 
   const copyToClipboard = () => {
@@ -192,6 +203,7 @@ export default function App() {
     setQueryState('idle');
     setResult(null);
     setErrorMsg('');
+    setPdfPendingNotice(false);
   };
 
   // Pre-configured official FAQs
@@ -424,8 +436,8 @@ export default function App() {
                       </p>
 
                       {/* PDF Download Button */}
-                      {result.pdf ? (
-                        <div className="mt-5 pt-4 border-t border-emerald-200/50">
+                      <div className="mt-5 pt-4 border-t border-emerald-200/50">
+                        {isPdfLinkAvailable(result.pdf) ? (
                           <a
                             id="pdf-download-btn"
                             href={result.pdf}
@@ -438,12 +450,29 @@ export default function App() {
                             <span>Buka Surat Kelulusan (PDF)</span>
                             <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                           </a>
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-slate-400 italic mt-3">
-                          * Berkas Surat Kelulusan digital tidak terlampir di database. Silakan laporkan ke panitia sekolah.
-                        </p>
-                      )}
+                        ) : (
+                          <>
+                            <button
+                              id="pdf-download-btn"
+                              type="button"
+                              onClick={showPendingPdfNotice}
+                              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 px-4 font-bold text-sm text-center transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 cursor-pointer"
+                            >
+                              <FileText className="w-4 h-4" />
+                              <span>Buka Surat Kelulusan (PDF)</span>
+                            </button>
+
+                            {pdfPendingNotice && (
+                              <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800 flex items-start gap-2" role="status">
+                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
+                                <span>
+                                  Surat Keterangan Lulus sedang dalam proses pengesahan. Mohon dicek secara berkala.
+                                </span>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>
