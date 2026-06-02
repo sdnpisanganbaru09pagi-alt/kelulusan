@@ -143,12 +143,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [queryState]);
 
-  // Smooth scroll to result after state settles
+  // Smooth scroll to result card after animation settles
   useEffect(() => {
     if ((queryState === 'success' || queryState === 'not_found' || queryState === 'error') && resultRef.current) {
       setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+      }, 400);
     }
   }, [queryState]);
 
@@ -503,12 +503,10 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            {/* Result anchor for scroll */}
-            <div ref={resultRef} />
-
             {/* ─── RESULTS ─── */}
             <AnimatePresence mode="wait">
               {queryState === 'success' && result && (
+                <div ref={resultRef}>
                 <motion.div
                   key="success-result"
                   initial={{ opacity: 0, y: 20, scale: 0.97 }}
@@ -616,9 +614,11 @@ export default function App() {
                     </div>
                   </div>
                 </motion.div>
+                </div>
               )}
 
               {queryState === 'not_found' && (
+                <div ref={resultRef}>
                 <motion.div
                   key="not-found-result"
                   initial={{ opacity: 0, y: 20 }}
@@ -644,9 +644,11 @@ export default function App() {
                     </p>
                   </div>
                 </motion.div>
+                </div>
               )}
 
               {queryState === 'error' && errorMsg && (
+                <div ref={resultRef}>
                 <motion.div
                   key="error-result"
                   initial={{ opacity: 0, y: 20 }}
@@ -663,6 +665,7 @@ export default function App() {
                     <p className="text-xs text-amber-800/90 mt-1">{errorMsg}</p>
                   </div>
                 </motion.div>
+                </div>
               )}
             </AnimatePresence>
           </div>
