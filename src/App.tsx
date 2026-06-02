@@ -25,9 +25,10 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Student, QueryState } from './types';
 import { fetchStudents } from './utils';
+import logoSrc from '../logo.png';
 
-// Full-screen Canvas Confetti
-function FullScreenConfetti() {
+// Full-screen canvas confetti cannon
+function ConfettiEffect() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -39,166 +40,111 @@ function FullScreenConfetti() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = [
-      '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-      '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
-      '#F97316', '#FBBF24', '#34D399', '#A78BFA'
+    const COLORS = [
+      '#3B82F6', '#60A5FA',
+      '#10B981', '#34D399',
+      '#F59E0B', '#FCD34D',
+      '#EF4444', '#F87171',
+      '#8B5CF6', '#C084FC',
+      '#EC4899', '#F472B6',
+      '#06B6D4', '#67E8F9',
     ];
 
-    type Particle = {
+    type Piece = {
       x: number; y: number;
       vx: number; vy: number;
-      color: string; size: number;
-      rotation: number; rotationSpeed: number;
-      opacity: number; shape: 'rect' | 'circle' | 'ribbon';
-      scaleX: number; gravity: number;
+      w: number; h: number;
+      color: string;
+      rotation: number;
+      rotSpeed: number;
+      opacity: number;
+      shape: number;
+      wobble: number; wobbleSpeed: number;
     };
 
-    const particles: Particle[] = [];
-    const TOTAL = 200;
+    const pieces: Piece[] = [];
+    const total = 180;
 
-    // Launch two bursts from bottom-left and bottom-right (like cannons)
-    for (let i = 0; i < TOTAL; i++) {
-      const fromLeft = i < TOTAL / 2;
-      const angle = fromLeft
-        ? (Math.random() * 60 + 30) * (Math.PI / 180)   // 30–90° from left
-        : (Math.random() * 60 + 90) * (Math.PI / 180);  // 90–150° from right
-      const speed = Math.random() * 18 + 8;
-      const shapes: Particle['shape'][] = ['rect', 'circle', 'ribbon'];
-      particles.push({
-        x: fromLeft ? canvas.width * 0.15 : canvas.width * 0.85,
-        y: canvas.height + 10,
-        vx: Math.cos(angle) * speed * (fromLeft ? 1 : -1),
+    for (let i = 0; i < total; i++) {
+      const side = i < total / 2 ? 0 : 1;
+      const angle = side === 0
+        ? (Math.random() * 60 + 20) * (Math.PI / 180)
+        : (Math.random() * 60 + 100) * (Math.PI / 180);
+      const speed = Math.random() * 18 + 10;
+      pieces.push({
+        x: side === 0 ? canvas.width * 0.2 : canvas.width * 0.8,
+        y: canvas.height * 0.35,
+        vx: Math.cos(angle) * speed,
         vy: -Math.sin(angle) * speed,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        size: Math.random() * 10 + 5,
+        w: Math.random() * 10 + 5,
+        h: Math.random() * 5 + 3,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
         rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.25,
+        rotSpeed: (Math.random() - 0.5) * 0.3,
         opacity: 1,
-        shape: shapes[Math.floor(Math.random() * shapes.length)],
-        scaleX: Math.random() > 0.5 ? 1 : 0.4,
-        gravity: Math.random() * 0.3 + 0.15,
+        shape: Math.floor(Math.random() * 3),
+        wobble: Math.random() * Math.PI * 2,
+        wobbleSpeed: Math.random() * 0.1 + 0.05,
       });
     }
 
-    let animId: number;
+    let raf: number;
     let frame = 0;
 
-    function draw() {
-      if (!ctx || !canvas) return;
+    const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frame++;
+      let allFaded = true;
 
-      let allDone = true;
-      for (const p of particles) {
-        if (p.opacity <= 0) continue;
-        allDone = false;
-
-        p.vy += p.gravity;
+      for (const p of pieces) {
+        p.vy += 0.45;
         p.vx *= 0.99;
         p.x += p.vx;
         p.y += p.vy;
-        p.rotation += p.rotationSpeed;
-
-        // Fade out when falling below mid-screen
-        if (p.y > canvas.height * 0.6) {
-          p.opacity -= 0.018;
-        }
-        if (p.opacity < 0) p.opacity = 0;
+        p.rotation += p.rotSpeed;
+        p.wobble += p.wobbleSpeed;
+        p.opacity = Math.max(0, p.opacity - 0.007);
+        if (p.opacity > 0) allFaded = false;
 
         ctx.save();
-        ctx.globalAlpha = Math.max(0, p.opacity);
+        ctx.globalAlpha = p.opacity;
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         ctx.fillStyle = p.color;
 
-        if (p.shape === 'circle') {
+        if (p.shape === 1) {
           ctx.beginPath();
-          ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+          ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2);
           ctx.fill();
-        } else if (p.shape === 'ribbon') {
-          ctx.scale(p.scaleX, 1);
-          ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        } else if (p.shape === 2) {
+          ctx.scale(Math.sin(p.wobble), 1);
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w * 2, p.h);
         } else {
-          ctx.scale(p.scaleX, 1);
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
         }
         ctx.restore();
       }
 
-      if (!allDone) {
-        animId = requestAnimationFrame(draw);
-      }
-    }
-
-    // Small delay before firing
-    const t = setTimeout(() => {
-      animId = requestAnimationFrame(draw);
-    }, 100);
-
-    const handleResize = () => {
-      if (canvas) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+      if (!allFaded && frame < 300) {
+        raf = requestAnimationFrame(draw);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     };
-    window.addEventListener('resize', handleResize);
 
-    return () => {
-      clearTimeout(t);
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', handleResize);
-    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
+      className="fixed inset-0 pointer-events-none z-50"
+      style={{ width: '100vw', height: '100vh' }}
     />
   );
 }
 
-// Small card-level confetti (kept for subtle in-card effect)
-function ConfettiEffect() {
-  const [particles, setParticles] = useState<{ id: number; x: number; y: number; size: number; color: string; delay: number; shape: string }[]>([]);
-
-  useEffect(() => {
-    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
-    const shapes = ['rounded-sm', 'rounded-full', 'rotate-45'];
-    const p = Array.from({ length: 30 }).map((_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 320,
-      y: (Math.random() - 0.5) * 280 - 20,
-      size: Math.random() * 7 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      delay: Math.random() * 0.4,
-      shape: shapes[Math.floor(Math.random() * shapes.length)]
-    }));
-    setParticles(p);
-  }, []);
-
-  return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden flex items-center justify-center">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          className={`absolute ${p.shape}`}
-          initial={{ x: 0, y: 0, opacity: 1, scale: 0, rotate: 0 }}
-          animate={{
-            x: p.x,
-            y: p.y + 120,
-            opacity: [1, 1, 0],
-            scale: [0, 1.3, 0.2],
-            rotate: Math.random() * 540 + 180
-          }}
-          transition={{ duration: 2.2, ease: "easeOut", delay: p.delay }}
-          style={{ width: p.size, height: p.size, backgroundColor: p.color }}
-        />
-      ))}
-    </div>
-  );
 }
 
 // Animated Gradient Background Orbs for Hero
@@ -240,8 +186,6 @@ export default function App() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [confettiKey, setConfettiKey] = useState(0);
 
   // Ref for smooth scroll to result
   const resultRef = useRef<HTMLDivElement>(null);
@@ -271,12 +215,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [queryState]);
 
-  // Smooth scroll to result after state settles
+  // Smooth scroll to result card after animation settles
   useEffect(() => {
     if ((queryState === 'success' || queryState === 'not_found' || queryState === 'error') && resultRef.current) {
       setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
+      }, 400);
     }
   }, [queryState]);
 
@@ -333,13 +277,6 @@ export default function App() {
       setResult(found);
       setPdfPendingNotice(false);
       setQueryState('success');
-      // Fire full-screen confetti if student passed
-      const statusLower = found.status.toLowerCase();
-      if (statusLower.includes('lulus')) {
-        setConfettiKey(k => k + 1);
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 5000);
-      }
     } else {
       setQueryState('not_found');
     }
@@ -368,7 +305,6 @@ export default function App() {
     setResult(null);
     setErrorMsg('');
     setPdfPendingNotice(false);
-    setShowConfetti(false);
   };
 
   const faqs = [
@@ -395,8 +331,9 @@ export default function App() {
       className="min-h-screen py-10 px-4 flex flex-col items-center justify-start font-sans"
       style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F0F4FF 50%, #F5F3FF 100%)' }}
     >
-      {/* Full-screen confetti on lulus */}
-      {showConfetti && <FullScreenConfetti key={confettiKey} />}
+      {/* Full-screen confetti on success */}
+      {queryState === 'success' && result && <ConfettiEffect />}
+
       <div className="w-full max-w-xl flex flex-col gap-6">
 
         {/* ─── HERO CARD ─── */}
@@ -458,7 +395,7 @@ export default function App() {
             >
               {!logoError ? (
                 <img
-                  src="/logo.png"
+                  src={logoSrc}
                   alt="Logo SDN Pisangan Baru 09"
                   className="w-full h-full object-contain p-1.5"
                   onError={() => setLogoError(true)}
@@ -641,12 +578,10 @@ export default function App() {
               )}
             </AnimatePresence>
 
-            {/* Result anchor for scroll */}
-            <div ref={resultRef} />
-
             {/* ─── RESULTS ─── */}
             <AnimatePresence mode="wait">
               {queryState === 'success' && result && (
+                <div ref={resultRef}>
                 <motion.div
                   key="success-result"
                   initial={{ opacity: 0, y: 20, scale: 0.97 }}
@@ -655,8 +590,6 @@ export default function App() {
                   transition={{ duration: 0.45, ease: 'easeOut' }}
                   className="mt-6 relative overflow-hidden rounded-2xl"
                 >
-                  <ConfettiEffect />
-
                   {/* Gradient border frame */}
                   <div className="p-0.5 rounded-2xl" style={{ background: 'linear-gradient(135deg, #10B981, #059669, #34D399)' }}>
                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[14px] p-6 relative overflow-hidden">
@@ -754,9 +687,11 @@ export default function App() {
                     </div>
                   </div>
                 </motion.div>
+                </div>
               )}
 
               {queryState === 'not_found' && (
+                <div ref={resultRef}>
                 <motion.div
                   key="not-found-result"
                   initial={{ opacity: 0, y: 20 }}
@@ -782,9 +717,11 @@ export default function App() {
                     </p>
                   </div>
                 </motion.div>
+                </div>
               )}
 
               {queryState === 'error' && errorMsg && (
+                <div ref={resultRef}>
                 <motion.div
                   key="error-result"
                   initial={{ opacity: 0, y: 20 }}
@@ -801,6 +738,7 @@ export default function App() {
                     <p className="text-xs text-amber-800/90 mt-1">{errorMsg}</p>
                   </div>
                 </motion.div>
+                </div>
               )}
             </AnimatePresence>
           </div>
