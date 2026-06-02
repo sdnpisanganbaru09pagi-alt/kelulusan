@@ -25,6 +25,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Student, QueryState } from './types';
 import { fetchStudents } from './utils';
 
+const schoolLogo = new URL('../logo.png', import.meta.url).href;
+
 // Simple Floating Confetti Particles Component (pure CSS and motion, no extra packages)
 function ConfettiEffect() {
   const [particles, setParticles] = useState<{ id: number; x: number; y: number; size: number; color: string; delay: number }[]>([]);
@@ -240,7 +242,7 @@ export default function App() {
           >
             {!logoError ? (
               <img
-                src="/assets/logo-sdn.png"
+                src={schoolLogo}
                 alt="Logo SDN Pisangan Baru 09"
                 className="w-full h-full object-contain p-1"
                 onError={() => setLogoError(true)}
