@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type RefObject } from 'react';
 import { 
   GraduationCap, 
   Search, 
@@ -25,10 +25,11 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Student, QueryState } from './types';
 import { fetchStudents } from './utils';
-import logoSrc from '../logo.png';
+
+const logoSrc = '/logo.png';
 
 // Full-screen canvas confetti cannon
-function ConfettiEffect() {
+function ConfettiEffect({ originRef }: { originRef?: RefObject<HTMLElement | null> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -37,8 +38,15 @@ function ConfettiEffect() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const cssWidth = window.innerWidth;
+    const cssHeight = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = Math.floor(cssWidth * dpr);
+    canvas.height = Math.floor(cssHeight * dpr);
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const COLORS = [
       '#3B82F6', '#60A5FA',
@@ -64,16 +72,26 @@ function ConfettiEffect() {
 
     const pieces: Piece[] = [];
     const total = 180;
+    const targetRect = originRef?.current?.getBoundingClientRect();
+    const originY = targetRect
+      ? Math.min(Math.max(targetRect.top + Math.min(targetRect.height * 0.32, 96), 96), cssHeight - 80)
+      : cssHeight * 0.35;
+    const leftOriginX = targetRect
+      ? Math.min(Math.max(targetRect.left + 24, 24), cssWidth - 24)
+      : cssWidth * 0.2;
+    const rightOriginX = targetRect
+      ? Math.min(Math.max(targetRect.right - 24, 24), cssWidth - 24)
+      : cssWidth * 0.8;
 
     for (let i = 0; i < total; i++) {
       const side = i < total / 2 ? 0 : 1;
       const angle = side === 0
-        ? (Math.random() * 60 + 20) * (Math.PI / 180)
-        : (Math.random() * 60 + 100) * (Math.PI / 180);
-      const speed = Math.random() * 18 + 10;
+        ? (Math.random() * 55 + 38) * (Math.PI / 180)
+        : (Math.random() * 55 + 87) * (Math.PI / 180);
+      const speed = Math.random() * 13 + 9;
       pieces.push({
-        x: side === 0 ? canvas.width * 0.2 : canvas.width * 0.8,
-        y: canvas.height * 0.35,
+        x: side === 0 ? leftOriginX : rightOriginX,
+        y: originY,
         vx: Math.cos(angle) * speed,
         vy: -Math.sin(angle) * speed,
         w: Math.random() * 10 + 5,
@@ -92,7 +110,7 @@ function ConfettiEffect() {
     let frame = 0;
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, cssWidth, cssHeight);
       frame++;
       let allFaded = true;
 
@@ -128,13 +146,13 @@ function ConfettiEffect() {
       if (!allFaded && frame < 300) {
         raf = requestAnimationFrame(draw);
       } else {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
       }
     };
 
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [originRef]);
 
   return (
     <canvas
@@ -143,8 +161,6 @@ function ConfettiEffect() {
       style={{ width: '100vw', height: '100vh' }}
     />
   );
-}
-
 }
 
 // Animated Gradient Background Orbs for Hero
@@ -186,9 +202,12 @@ export default function App() {
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  // Ref for smooth scroll to result
+  // Refs for smooth scroll and focus to result
   const resultRef = useRef<HTMLDivElement>(null);
+  const successCardRef = useRef<HTMLDivElement>(null);
+  const studentInfoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -215,14 +234,31 @@ export default function App() {
     return () => clearInterval(interval);
   }, [queryState]);
 
-  // Smooth scroll to result card after animation settles
+  // Smooth scroll to result, then focus the student's name section on success.
   useEffect(() => {
-    if ((queryState === 'success' || queryState === 'not_found' || queryState === 'error') && resultRef.current) {
-      setTimeout(() => {
-        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 400);
-    }
-  }, [queryState]);
+    const shouldRevealResult = queryState === 'success' || queryState === 'not_found' || queryState === 'error';
+    setShowConfetti(false);
+
+    if (!shouldRevealResult || !resultRef.current) return;
+
+    let confettiTimer: number | undefined;
+    const scrollTimer = window.setTimeout(() => {
+      const targetElement = queryState === 'success' ? studentInfoRef.current : resultRef.current;
+      targetElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      if (queryState === 'success' && studentInfoRef.current) {
+        confettiTimer = window.setTimeout(() => {
+          studentInfoRef.current?.focus({ preventScroll: true });
+          setShowConfetti(true);
+        }, 650);
+      }
+    }, 350);
+
+    return () => {
+      window.clearTimeout(scrollTimer);
+      if (confettiTimer) window.clearTimeout(confettiTimer);
+    };
+  }, [queryState, result?.nisn]);
 
   const getLoadingText = () => {
     switch (loadingStep) {
@@ -332,7 +368,7 @@ export default function App() {
       style={{ background: 'linear-gradient(135deg, #EFF6FF 0%, #F0F4FF 50%, #F5F3FF 100%)' }}
     >
       {/* Full-screen confetti on success */}
-      {queryState === 'success' && result && <ConfettiEffect />}
+      {showConfetti && queryState === 'success' && result && <ConfettiEffect originRef={successCardRef} />}
 
       <div className="w-full max-w-xl flex flex-col gap-6">
 
@@ -591,7 +627,11 @@ export default function App() {
                   className="mt-6 relative overflow-hidden rounded-2xl"
                 >
                   {/* Gradient border frame */}
-                  <div className="p-0.5 rounded-2xl" style={{ background: 'linear-gradient(135deg, #10B981, #059669, #34D399)' }}>
+                  <div
+                    ref={successCardRef}
+                    className="p-0.5 rounded-2xl"
+                    style={{ background: 'linear-gradient(135deg, #10B981, #059669, #34D399)' }}
+                  >
                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-[14px] p-6 relative overflow-hidden">
 
                       {/* Decorative background award */}
@@ -615,7 +655,11 @@ export default function App() {
                       </div>
 
                       {/* Student info */}
-                      <div className="space-y-1 relative z-10">
+                      <div
+                        ref={studentInfoRef}
+                        tabIndex={-1}
+                        className="space-y-1 relative z-10 -mx-2 rounded-2xl px-2 py-1 transition focus:outline-none focus:ring-4 focus:ring-emerald-300/70 focus:ring-offset-2 focus:ring-offset-emerald-50"
+                      >
                         <p className="text-xs font-semibold text-emerald-700/70 tracking-wide uppercase">Nama Siswa</p>
                         <p className="text-2xl font-black text-slate-900 tracking-tight leading-tight">
                           {result.nama}
