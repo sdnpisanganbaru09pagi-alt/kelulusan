@@ -391,29 +391,29 @@ export default function App() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -15, scale: 0.95 }}
                   transition={{ duration: 0.4, ease: 'easeOut' }}
-                  className="mt-6 border-2 border-emerald-500 bg-emerald-50/50 rounded-2xl p-6 relative overflow-hidden"
+                  className="mt-6 border-2 border-emerald-500 bg-emerald-50/50 rounded-2xl p-5 sm:p-6 relative overflow-hidden"
                 >
                   <ConfettiEffect />
                   
                   {/* Decorative Sparkle Graphic */}
-                  <div className="absolute right-3 top-3 opacity-20 text-emerald-600 pointer-events-none">
+                  <div className="absolute right-3 top-3 opacity-15 sm:opacity-20 text-emerald-600 pointer-events-none">
                     <Award className="w-24 h-24" />
                   </div>
 
-                  <div className="flex items-start gap-4 z-10 relative">
-                    <div className="p-3 bg-emerald-500 rounded-xl text-white shadow-md shadow-emerald-200 self-start">
+                  <div className="flex flex-col items-center gap-4 z-10 relative sm:flex-row sm:items-start">
+                    <div className="p-3 bg-emerald-500 rounded-xl text-white shadow-md shadow-emerald-200 sm:self-start">
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
-                    <div className="flex-1">
+                    <div className="w-full min-w-0 flex-1 text-center sm:text-left">
                       <h3 className="text-xs font-extrabold text-emerald-800 tracking-wider uppercase">PENGUMUMAN HASIL KELULUSAN</h3>
                       
                       {/* Name display */}
-                      <p className="text-2xl font-black text-slate-900 mt-2 tracking-tight line-clamp-2">
+                      <p className="mx-auto mt-2 max-w-full text-2xl font-black text-slate-900 tracking-tight break-words line-clamp-2 sm:mx-0">
                         {result.nama}
                       </p>
                       
                       {/* NISN tag */}
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="mt-1 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                         <p className="text-sm font-mono font-semibold text-slate-500">
                           NISN: {result.nisn}
                         </p>
@@ -427,7 +427,7 @@ export default function App() {
                       </div>
 
                       {/* Lulus status badge */}
-                      <div className="mt-4 inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm uppercase px-4 py-1.5 rounded-full shadow-md shadow-emerald-200 tracking-wider">
+                      <div className="mt-4 inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-sm uppercase px-4 py-1.5 rounded-full shadow-md shadow-emerald-200 tracking-wider">
                         🎓 {result.status}
                       </div>
 
